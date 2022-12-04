@@ -79,3 +79,36 @@ const splitRucksack = (rucksack: string): [string, string] => {
 
   return [firstComp, secondComp]
 }
+
+export const getGroupBadgePriorities = (rucksacks: string[]): number => {
+  let total = 0
+  for (const [r1, r2, r3] of groupSackBy(rucksacks)) {
+    total += +alphabet[getGroupBadge([r1, r2, r3]) as any]
+  }
+  return total
+}
+
+const groupSackBy = (rucksacks: string[], by = 3): string[][] => {
+  const groupedSacks: string[][] = []
+  let currentGroup: string[] = []
+  for (let i = 0; i <= rucksacks.length; i++) {
+    if (i > 0 && i % 3 === 0) {
+      groupedSacks.push(currentGroup)
+      currentGroup = []
+    }
+    currentGroup.push(rucksacks[i])
+  }
+  return groupedSacks
+}
+
+const getGroupBadge = ([r1, r2, r3]: [string, string, string]): string => {
+  const r1Contains = new Set(r1)
+  const r2Contains = new Set<string>()
+  for (const i of r2) {
+    r1Contains.has(i) && r2Contains.add(i)
+  }
+  for (const i of r3) {
+    if (r2Contains.has(i)) return i
+  }
+  throw new Error('no badge found')
+}

@@ -53,11 +53,9 @@ export const getDirsWithSizeAtMost100000 = (fs: FileSystem): number => {
 }
 
 const addTotalSize = (fs: FileSystem): FileSystem => {
-  // sort directories by # of subfolders
   sortByDepth(fs).forEach(dir => {
-    dir.totalSize = dir.size // sum of files sizes
+    dir.totalSize = dir.size
     for (const subdirName of dir.subDirs) {
-      // add total size of all subdirs
       dir.totalSize += fs[subdirName].totalSize
     }
   })

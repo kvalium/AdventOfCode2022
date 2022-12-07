@@ -9,6 +9,7 @@ interface Directory {
   subDirs: Array<Directory['name']>
   size: number
   totalSize: number
+  depth: number
 }
 
 type FileSystem = Record<Directory['name'], Directory>
@@ -52,18 +53,23 @@ export const getDirsWithSizeAtMost100000 = (fs: FileSystem): number => {
 }
 
 const addTotalSize = (fs: FileSystem): FileSystem => {
-  const fsBySubFolderLen = Object.values(fs).sort((a, b) => {
-    if (a.subDirs.length <= b.subDirs.length) return -1
-    return 0
-  })
-  fsBySubFolderLen.forEach(dir => {
-    dir.totalSize = dir.size
+  // sort directories by # of subfolders
+  sortByDepth(fs).forEach(dir => {
+    dir.totalSize = dir.size // sum of files sizes
     for (const subdirName of dir.subDirs) {
+      // add total size of all subdirs
       dir.totalSize += fs[subdirName].totalSize
     }
   })
   return fs
 }
+
+const sortByDepth = (fs: FileSystem): Directory[] =>
+  Object.values(fs).sort((a, b) => {
+    if (a.depth < b.depth) return 1
+    if (a.depth > b.depth) return -1
+    return 0
+  })
 
 const isCdCommand = (cmd: string): boolean => cmd.startsWith('$ cd ')
 const isLsCommand = (cmd: string): boolean => cmd === '$ ls'
@@ -82,22 +88,40 @@ const cd = (
   cmd: string,
   path: string
 ): Directory['name'] | undefined => {
-  const dirName = cmd.replace('$ cd ', '')
+  let dirName = cmd.replace('$ cd ', '')
+  if (dirName === '/') dirName = 'ROOT'
   if (dirName === '..') {
     const p = path.split('/')
     p.pop()
     return p.join('/')
   }
-  const newPath = `${path}/${dirName}`
+  const newPath = path !== '' ? `${path}/${dirName}` : dirName
   // already scanned folder
   if (fs[newPath] !== undefined) return
   // create fileSystem entry
   fs[newPath] = {
     name: newPath,
+    depth: newPath === 'ROOT' ? 0 : newPath.split('/').length,
     files: [],
     subDirs: [],
     size: 0,
     totalSize: 0
   }
   return newPath
+}
+
+const TOTAL_SIZE = 70_000_000
+const UPDATE_NEEDED_SPACE = 30_000_000
+
+export const getSmallestDirSize = (fs: FileSystem): Directory['totalSize'] => {
+  const rootSize = fs.ROOT.totalSize
+  const unusedSpace = TOTAL_SIZE - rootSize
+  const neededSpace = UPDATE_NEEDED_SPACE - unusedSpace
+
+  let smallestDirSize = rootSize
+  for (const d of Object.values(fs)) {
+    if (d.totalSize <= neededSpace) continue
+    smallestDirSize = Math.min(d.totalSize, smallestDirSize)
+  }
+  return smallestDirSize
 }

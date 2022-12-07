@@ -84,12 +84,8 @@ const cd = (
 ): Directory['name'] | undefined => {
   const dirName = cmd.replace('$ cd ', '')
   if (dirName === '..') {
-    console.log({ dirName })
     const p = path.split('/')
-    console.log({ p })
-
     p.pop()
-    console.log({ j: p.join('/') })
     return p.join('/')
   }
   const newPath = `${path}/${dirName}`

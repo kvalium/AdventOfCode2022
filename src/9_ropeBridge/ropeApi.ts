@@ -8,28 +8,65 @@ interface Knot {
   y: number
 }
 
-export const countPositions = (rawHeadMovements: string[]): number => {
+export const countPositions = (
+  rawHeadMovements: string[],
+  nbKnots = 2
+): number => {
   const headMvts = parseMovements(rawHeadMovements)
 
-  const head: Knot = { x: 0, y: 0 }
-  let tail: Knot = { x: 0, y: 0 }
+  const knots = [...Array(nbKnots).fill({ x: 0, y: 0 })].map(k => ({
+    x: 0,
+    y: 0
+  }))
+  const prevKnots = [...Array(nbKnots).fill(1)].map(k => ({ x: 0, y: 0 }))
 
   const tailHistory = new Set()
   tailHistory.add('0;0')
 
   for (const mvt of headMvts) {
+    console.log(`== ${mvt.dir}${mvt.nb} ==`)
     const moveHead = headMovementLookup[mvt.dir]
 
     for (let i = 0; i < mvt.nb; i++) {
-      const previousHead: Knot = { x: head.x, y: head.y }
-      moveHead(head)
-      const adjacent = isAdjacent(head, tail)
-      if (adjacent) continue
-      tail = previousHead
-      // moveTail(tail, head)
-      tailHistory.add(displayKnot(tail))
+      console.log('***** NEXT')
+      knots.forEach((knot, kindex) => {
+        prevKnots[kindex] = { x: knot.x, y: knot.y }
+
+        if (kindex === 0) {
+          moveHead(knot)
+          console.log(
+            `Knot#1: move from ${displayKnot(
+              prevKnots[kindex]
+            )} to ${displayKnot(knot)}`
+          )
+
+          return
+        }
+
+        const aheadKnot = knots[kindex - 1]
+        const adjacent = isAdjacent(aheadKnot, knot)
+
+        console.log(
+          `Knot#${kindex + 1}: ${displayKnot(aheadKnot)} adj. to ${displayKnot(
+            knot
+          )}? `,
+          adjacent
+        )
+
+        if (!adjacent) {
+          knots[kindex] = {
+            x: prevKnots[kindex - 1].x,
+            y: prevKnots[kindex - 1].y
+          }
+          if (kindex === knots.length - 1) {
+            tailHistory.add(displayKnot(knots[kindex]))
+          }
+        }
+      })
     }
   }
+
+  console.log({ prevKnots, knots })
 
   return tailHistory.size
 }
@@ -52,10 +89,10 @@ const isAdjacent = (h: Knot, t: Knot): boolean => {
 const displayKnot = (k: Knot): string => `${k.x};${k.y}`
 
 const headMovementLookup: Record<string, (k: Knot) => void> = {
-  U: head => head.y++,
-  R: head => head.x++,
-  D: head => head.y--,
-  L: head => head.x--
+  U: k => k.y++,
+  R: k => k.x++,
+  D: k => k.y--,
+  L: k => k.x--
 }
 
 const parseMovements = (mvts: string[]): Movement[] =>

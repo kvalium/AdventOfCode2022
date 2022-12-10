@@ -12,7 +12,7 @@ describe('9 - Rope Bridge', () => {
     expect(countPositions(headMovements)).toEqual(13)
   })
   it.only('returns the number of positions with rope len of 10', () => {
-    // expect(countPositions(headMovements, 10)).toEqual(1)
+    expect(countPositions(headMovements, 10)).toEqual(1)
     expect(countPositions(headMovements2, 10)).toEqual(36)
   })
 })

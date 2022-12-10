@@ -12,62 +12,45 @@ export const countPositions = (
   rawHeadMovements: string[],
   nbKnots = 2
 ): number => {
-  const headMvts = parseMovements(rawHeadMovements)
+  const directions = parseMovements(rawHeadMovements)
 
-  const knots = [...Array(nbKnots).fill({ x: 0, y: 0 })].map(k => ({
+  const rope = [...Array(nbKnots).fill({ x: 0, y: 0 })].map(_k => ({
     x: 0,
     y: 0
   }))
-  const prevKnots = [...Array(nbKnots).fill(1)].map(k => ({ x: 0, y: 0 }))
+  const prevKnots = [...Array(nbKnots).fill(1)].map(_k => ({ x: 0, y: 0 }))
 
   const tailHistory = new Set()
   tailHistory.add('0;0')
 
-  for (const mvt of headMvts) {
-    console.log(`== ${mvt.dir}${mvt.nb} ==`)
-    const moveHead = headMovementLookup[mvt.dir]
+  for (const direction of directions) {
+    const moveHead = headMovementLookup[direction.dir]
 
-    for (let i = 0; i < mvt.nb; i++) {
-      console.log('***** NEXT')
-      knots.forEach((knot, kindex) => {
-        prevKnots[kindex] = { x: knot.x, y: knot.y }
+    for (let i = 0; i < direction.nb; i++) {
+      rope.forEach((knot, j) => {
+        prevKnots[j] = { x: rope[j].x, y: rope[j].y }
 
-        if (kindex === 0) {
+        if (j === 0) {
+          prevKnots[j] = { x: rope[j].x, y: rope[j].y }
           moveHead(knot)
-          console.log(
-            `Knot#1: move from ${displayKnot(
-              prevKnots[kindex]
-            )} to ${displayKnot(knot)}`
-          )
-
           return
         }
 
-        const aheadKnot = knots[kindex - 1]
+        const aheadKnot = rope[j - 1]
         const adjacent = isAdjacent(aheadKnot, knot)
 
-        console.log(
-          `Knot#${kindex + 1}: ${displayKnot(aheadKnot)} adj. to ${displayKnot(
-            knot
-          )}? `,
-          adjacent
-        )
-
         if (!adjacent) {
-          knots[kindex] = {
-            x: prevKnots[kindex - 1].x,
-            y: prevKnots[kindex - 1].y
+          rope[j] = {
+            x: prevKnots[j - 1].x,
+            y: prevKnots[j - 1].y
           }
-          if (kindex === knots.length - 1) {
-            tailHistory.add(displayKnot(knots[kindex]))
+          if (j === rope.length - 1) {
+            tailHistory.add(displayKnot(rope[j]))
           }
         }
       })
     }
   }
-
-  console.log({ prevKnots, knots })
-
   return tailHistory.size
 }
 

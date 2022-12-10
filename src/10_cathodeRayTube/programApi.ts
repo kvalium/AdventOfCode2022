@@ -28,6 +28,5 @@ export const buildProgramHistory = (program: string[]): ProgramHistory => {
     x += val
     instructionHistory[timer] = x
   }
-  console.log(instructionHistory)
   return instructionHistory
 }
